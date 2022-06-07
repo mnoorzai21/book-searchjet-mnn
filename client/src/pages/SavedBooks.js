@@ -7,8 +7,7 @@ import {
   Button,
 } from "react-bootstrap";
 
-import { REMOVE_BOOK } from "../utils/mutations";
-import { QUERY_ME } from "../utils/queries";
+import { getMe, REMOVE_BOOK } from "../utils/mutations";
 import Auth from "../utils/auth";
 import { removeBookId } from "../utils/localStorage";
 
@@ -27,7 +26,7 @@ const SavedBooks = () => {
           return false;
         }
 
-        const response = await QUERY_ME(token);
+        const response = await getMe(token);
 
         if (!response.ok) {
           throw new Error("something went wrong!");
