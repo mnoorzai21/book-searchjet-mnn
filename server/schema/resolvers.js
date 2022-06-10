@@ -2,7 +2,7 @@ const { AuthenticationError } = require("apollo-server-express");
 const { signToken } = require("../utils/auth");
 const { User } = require("../models");
 
-module.exports = {
+const resolvers = {
   Query: {
     me: async (parent, args, context) => {
       if (context.user) {
@@ -25,12 +25,12 @@ module.exports = {
       const user = await User.findOne({ email });
 
       if (!user) {
-        throw new AuthenticationError("Incorrect credentials");
+        throw new AuthenticationError("Incorrect password or email!");
       }
       const correctPw = await user.isCorrectPassword(password);
 
       if (!correctPw) {
-        throw new AuthenticationError("Incorrect credentials");
+        throw new AuthenticationError("Incorrect password or email");
       }
 
       const token = signToken(user);
@@ -62,3 +62,4 @@ module.exports = {
     },
   },
 };
+module.exports = resolvers;
