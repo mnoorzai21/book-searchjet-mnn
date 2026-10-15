@@ -1,43 +1,31 @@
 const path = require("path");
-const express = require("express");
-const { ApolloServer } = require("apollo-server-express");
-const { authMiddleware } = require("./utils/auth");
 
-const { typeDefs, resolvers } = require("./schema");
-const db = require("./config/connection");
-
-const PORT = process.env.PORT || 3001;
-const app = express();
-const server = new ApolloServer({
-  typeDefs,
-  resolvers,
-  context: authMiddleware,
-});
-
-app.use(express.urlencoded({ extended: false }));
-app.use(express.json());
-
-// if we're in production, serve client/build as static assets
-if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "../client/build")));
+// Load server/.env when it exists (Node 20.12+ has this built in).
+try {
+  process.loadEnvFile(path.join(__dirname, ".env"));
+} catch {
+  // No .env file: rely on real environment variables (e.g. on Render).
 }
 
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "../client/"));
-});
+const { connectDb } = require("./config/connection");
+const { createApp } = require("./app");
+const { getSecret } = require("./utils/auth");
 
-const startApolloServer = async (typeDefs, resolvers) => {
-  await server.start();
-  server.applyMiddleware({ app });
+const PORT = process.env.PORT || 3001;
 
-  db.once("open", () => {
-    app.listen(PORT, () => {
-      console.log(`API server running on port ${PORT}!`);
-      console.log(
-        `Use GraphQL at http://localhost:${PORT}${server.graphqlPath}`
-      );
-    });
+async function start() {
+  getSecret(); // Fail fast if JWT_SECRET is missing in production.
+
+  await connectDb();
+  const { app } = await createApp();
+
+  app.listen(PORT, () => {
+    console.log(`API server running on port ${PORT}`);
+    console.log(`GraphQL endpoint: http://localhost:${PORT}/graphql`);
   });
-};
+}
 
-startApolloServer(typeDefs, resolvers);
+start().catch((error) => {
+  console.error("Failed to start server:", error);
+  process.exit(1);
+});
