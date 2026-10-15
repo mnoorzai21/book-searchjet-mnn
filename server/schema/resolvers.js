@@ -1,65 +1,89 @@
-const { AuthenticationError } = require("apollo-server-express");
-const { signToken } = require("../utils/auth");
+const { GraphQLError } = require("graphql");
+const { signToken, authenticationError } = require("../utils/auth");
 const { User } = require("../models");
+
+const PRIVATE_FIELDS = "-__v -password";
+
+function requireUser(context) {
+  if (!context.user) {
+    throw authenticationError();
+  }
+
+  return context.user;
+}
+
+function badInput(message) {
+  return new GraphQLError(message, { extensions: { code: "BAD_USER_INPUT" } });
+}
 
 const resolvers = {
   Query: {
     me: async (parent, args, context) => {
-      if (context.user) {
-        const userData = await User.findOne({ _id: context.user._id }).select(
-          "-_v -password"
-        );
-        return userData;
-      }
-      throw new AuthenticationError("You need to be logged in!");
+      const user = requireUser(context);
+
+      return User.findById(user._id).select(PRIVATE_FIELDS);
     },
   },
+
   Mutation: {
-    addUser: async (parent, args) => {
-      const user = await User.create(args);
-      const token = signToken(user);
+    addUser: async (parent, { username, email, password }) => {
+      if (password.length < 6) {
+        throw badInput("Password must be at least 6 characters.");
+      }
 
-      return { token, user };
+      try {
+        const user = await User.create({ username, email, password });
+
+        return { token: signToken(user), user };
+      } catch (error) {
+        if (error.code === 11000) {
+          const field = Object.keys(error.keyPattern || {})[0] || "account";
+          throw badInput(`That ${field} is already registered.`);
+        }
+
+        if (error.name === "ValidationError") {
+          throw badInput(Object.values(error.errors)[0].message);
+        }
+
+        throw error;
+      }
     },
+
     login: async (parent, { email, password }) => {
-      const user = await User.findOne({ email });
+      const user = await User.findOne({ email: email.toLowerCase().trim() });
 
-      if (!user) {
-        throw new AuthenticationError("Incorrect password or email!");
-      }
-      const correctPw = await user.isCorrectPassword(password);
-
-      if (!correctPw) {
-        throw new AuthenticationError("Incorrect password or email");
+      // Same message for both cases, so the API doesn't reveal which
+      // emails are registered.
+      if (!user || !(await user.isCorrectPassword(password))) {
+        throw authenticationError("Incorrect email or password.");
       }
 
-      const token = signToken(user);
-      return { token, user };
+      return { token: signToken(user), user };
     },
+
     saveBook: async (parent, { bookData }, context) => {
-      if (context.user) {
-        const updatedUser = await User.findByIdAndUpdate(
-          { _id: context.user._id },
-          { $push: { savedBooks: bookData } },
-          { new: true }
-        );
+      const user = requireUser(context);
 
-        return updatedUser;
-      }
+      // Only add the book if it isn't already saved.
+      await User.updateOne(
+        { _id: user._id, "savedBooks.bookId": { $ne: bookData.bookId } },
+        { $push: { savedBooks: bookData } },
+        { runValidators: true },
+      );
 
-      throw new AuthenticationError("You need to be logged in!");
+      return User.findById(user._id).select(PRIVATE_FIELDS);
     },
+
     removeBook: async (parent, { bookId }, context) => {
-      if (context.user) {
-        const updatedUser = await User.findOneAndUpdate(
-          { _id: context.user._id },
-          { $pull: { savedBooks: { bookId } } },
-          { new: true }
-        );
-        return updatedUser;
-      }
-      throw new AuthenticationError("You need to be logged in!");
+      const user = requireUser(context);
+
+      return User.findByIdAndUpdate(
+        user._id,
+        { $pull: { savedBooks: { bookId } } },
+        { new: true },
+      ).select(PRIVATE_FIELDS);
     },
   },
 };
+
 module.exports = resolvers;

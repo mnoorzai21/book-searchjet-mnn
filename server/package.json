@@ -1,25 +1,28 @@
 {
-  "name": "server",
-  "version": "1.0.0",
-  "description": "",
+  "name": "book-search-server",
+  "version": "2.0.0",
+  "description": "GraphQL API for the Google Books search app",
   "main": "server.js",
+  "private": true,
   "scripts": {
     "start": "node server.js",
-    "watch": "nodemon server.js"
+    "dev": "node --watch server.js",
+    "test": "node --test test/*.test.js"
   },
-  "keywords": [],
-  "author": "",
   "license": "ISC",
+  "engines": {
+    "node": ">=20.12"
+  },
   "dependencies": {
-    "apollo-server-core": "^3.8.1",
-    "apollo-server-express": "^3.8.1",
-    "bcrypt": "^4.0.1",
-    "express": "^4.17.1",
-    "graphql": "^16.5.0",
-    "jsonwebtoken": "^8.5.1",
-    "mongoose": "^5.9.10"
+    "@apollo/server": "^5.0.0",
+    "@as-integrations/express5": "^1.1.2",
+    "bcryptjs": "^3.0.2",
+    "express": "^5.1.0",
+    "graphql": "^16.11.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.18.0"
   },
   "devDependencies": {
-    "nodemon": "^2.0.3"
+    "mongodb-memory-server": "^10.2.0"
   }
 }
