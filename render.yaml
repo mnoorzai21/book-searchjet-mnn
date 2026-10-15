@@ -1,0 +1,19 @@
+# Render Blueprint: one free web service that serves both the API and the
+# React app. Deploy with Render > New > Blueprint.
+services:
+  - type: web
+    name: book-searchjet
+    runtime: node
+    plan: free
+    buildCommand: npm run build
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "22"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MONGODB_URI
+        sync: false # paste your MongoDB Atlas connection string when prompted
