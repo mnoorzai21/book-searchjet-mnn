@@ -1,17 +1,46 @@
 body {
-  font-family: 'Rubik', sans-serif;
+  font-family: "Rubik", system-ui, sans-serif;
+  background: #f6f7f9;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: 'Rubik Mono One', sans-serif;
+h1 {
+  font-family: "Rubik Mono One", "Rubik", sans-serif;
+}
+
+.hero h1 {
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  margin-bottom: 1.25rem;
 }
 
 .small {
   font-weight: 300;
   font-style: italic;
+}
+
+.book-card {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.book-cover {
+  height: 260px;
+  object-fit: contain;
+  background: #eceef1;
+  padding: 12px;
+}
+
+.book-card .card-title a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.book-card .card-title a:hover {
+  text-decoration: underline;
+}
+
+/* Keep long descriptions from stretching the cards. */
+.book-description {
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
