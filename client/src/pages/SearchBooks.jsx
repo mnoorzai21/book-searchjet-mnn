@@ -1,26 +1,20 @@
 import { useEffect, useState } from "react";
 import { Alert, Button, Col, Container, Form, Row, Spinner } from "react-bootstrap";
-import { useMutation } from "@apollo/client";
+import { useApolloClient, useMutation } from "@apollo/client";
 
 import BookCard from "../components/BookCard";
 import { SAVE_BOOK } from "../utils/mutations";
+import { SEARCH_BOOKS } from "../utils/queries";
 import { getSavedBookIds, saveBookIds } from "../utils/localStorage";
 import Auth from "../utils/auth";
 
-function toBook(item) {
-  const info = item.volumeInfo || {};
-
-  return {
-    bookId: item.id,
-    authors: info.authors || [],
-    title: info.title || "Untitled",
-    description: info.description || "",
-    image: info.imageLinks?.thumbnail?.replace("http://", "https://") || "",
-    link: info.infoLink || "",
-  };
+// Only the fields the saveBook mutation accepts (drops Apollo's __typename).
+function toBookInput({ bookId, authors, title, description, image, link }) {
+  return { bookId, authors, title, description, image, link };
 }
 
 function SearchBooks() {
+  const client = useApolloClient();
   const [searchedBooks, setSearchedBooks] = useState([]);
   const [searchInput, setSearchInput] = useState("");
   const [lastQuery, setLastQuery] = useState("");
@@ -48,22 +42,21 @@ function SearchBooks() {
     setSearchError("");
 
     try {
-      const response = await fetch(
-        `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=24`,
-      );
+      const { data } = await client.query({
+        query: SEARCH_BOOKS,
+        variables: { query },
+        fetchPolicy: "network-only",
+      });
 
-      if (!response.ok) {
-        throw new Error(`Google Books returned ${response.status}`);
-      }
-
-      const { items = [] } = await response.json();
-
-      setSearchedBooks(items.map(toBook));
+      setSearchedBooks(data.searchBooks);
       setLastQuery(query);
       setSearchInput("");
     } catch (error) {
       console.error(error);
-      setSearchError("Search failed. Please try again in a moment.");
+      setSearchError(
+        error.graphQLErrors?.[0]?.message ||
+          "Search failed. Please try again in a moment.",
+      );
     } finally {
       setSearching(false);
     }
@@ -75,7 +68,7 @@ function SearchBooks() {
     }
 
     try {
-      await saveBook({ variables: { bookData: book } });
+      await saveBook({ variables: { bookData: toBookInput(book) } });
       setSavedBookIds((ids) => [...ids, book.bookId]);
     } catch (error) {
       console.error(error);
