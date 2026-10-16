@@ -7,6 +7,42 @@ const mongoose = require("mongoose");
 const { MongoMemoryServer } = require("mongodb-memory-server");
 
 const { createApp } = require("../app");
+const { clearSearchCache } = require("../utils/googleBooks");
+
+// Fake Google Books API, so tests don't depend on the internet.
+const realFetch = globalThis.fetch;
+const googleRequests = [];
+let googleStatus = 200;
+
+globalThis.fetch = async (url, options) => {
+  const href = String(url);
+
+  if (!href.startsWith("https://www.googleapis.com/books/")) {
+    return realFetch(url, options);
+  }
+
+  googleRequests.push(new URL(href));
+
+  if (googleStatus !== 200) {
+    return new Response('{"error":{"code":429,"message":"Quota exceeded"}}', {
+      status: googleStatus,
+    });
+  }
+
+  return Response.json({
+    items: [
+      {
+        id: "dune-1",
+        volumeInfo: {
+          title: "Dune",
+          authors: ["Frank Herbert"],
+          imageLinks: { thumbnail: "http://books.google.com/dune.jpg" },
+          infoLink: "https://books.google.com/dune",
+        },
+      },
+    ],
+  });
+};
 
 let mongo;
 let httpServer;
@@ -150,6 +186,55 @@ test("ignores invalid tokens", async () => {
   const { errors } = await graphql(ME, {}, "not-a-real-token");
 
   assert.equal(errors[0].extensions.code, "UNAUTHENTICATED");
+});
+
+const SEARCH = `
+  query ($query: String!) {
+    searchBooks(query: $query) { bookId title authors description image link }
+  }`;
+
+test("searches Google Books through the server", async () => {
+  clearSearchCache();
+  process.env.GOOGLE_BOOKS_API_KEY = "test-key";
+
+  const { data, errors } = await graphql(SEARCH, { query: "  dune  " });
+
+  assert.equal(errors, undefined);
+  assert.deepEqual(data.searchBooks[0], {
+    bookId: "dune-1",
+    title: "Dune",
+    authors: ["Frank Herbert"],
+    description: "",
+    image: "https://books.google.com/dune.jpg",
+    link: "https://books.google.com/dune",
+  });
+
+  const request = googleRequests.at(-1);
+  assert.equal(request.searchParams.get("q"), "dune");
+  assert.equal(request.searchParams.get("key"), "test-key");
+
+  // A repeated search is served from the cache.
+  await graphql(SEARCH, { query: "Dune" });
+  assert.equal(googleRequests.length, 1);
+
+  delete process.env.GOOGLE_BOOKS_API_KEY;
+});
+
+test("shows a friendly message when Google Books is rate limited", async () => {
+  clearSearchCache();
+  googleStatus = 429;
+
+  const { errors } = await graphql(SEARCH, { query: "anything" });
+
+  googleStatus = 200;
+  assert.equal(errors[0].extensions.code, "SEARCH_UNAVAILABLE");
+  assert.match(errors[0].message, /busy right now/);
+});
+
+test("rejects empty searches", async () => {
+  const { errors } = await graphql(SEARCH, { query: "   " });
+
+  assert.equal(errors[0].extensions.code, "BAD_USER_INPUT");
 });
 
 test("reports health and serves the React app for client routes", async () => {

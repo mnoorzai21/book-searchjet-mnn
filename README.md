@@ -10,7 +10,7 @@ A full-stack MERN app for searching the Google Books catalog and keeping a perso
 
 ## Features
 
-- Search millions of books through the Google Books API
+- Search millions of books through the Google Books API, via a cached server-side GraphQL query
 - Sign up and log in with JWT authentication and bcrypt-hashed passwords
 - Save books to your account and manage your list on the **My Books** page
 - GraphQL API built with Apollo Server, with clear errors for duplicate accounts and wrong passwords
@@ -28,9 +28,11 @@ A full-stack MERN app for searching the Google Books catalog and keeping a perso
 
 ```
 React (Vite) ──GraphQL──▶ Express + Apollo Server ──▶ MongoDB Atlas
-     │
-     └──REST──▶ Google Books API (search results)
+                                    │
+                                    └──▶ Google Books API (cached searches)
 ```
+
+Book searches go through the server, which keeps the Google API key private and caches results for 10 minutes.
 
 In production, one Express server serves both the GraphQL API at `/graphql` and the built React app, so the whole project runs as a single free web service.
 
@@ -55,7 +57,7 @@ npm run install:all
 cp server/.env.example server/.env
 ```
 
-Set `MONGODB_URI` (local MongoDB or your Atlas connection string) and `JWT_SECRET` (any long random string).
+Set `MONGODB_URI` (local MongoDB or your Atlas connection string) and `JWT_SECRET` (any long random string). Optionally set `GOOGLE_BOOKS_API_KEY` (see below).
 
 ### Run
 
@@ -78,6 +80,8 @@ The tests start a real in-memory MongoDB and cover sign-up, login, duplicate acc
 
 1. **Database:** create a free **M0** cluster on MongoDB Atlas, add a database user, allow network access from `0.0.0.0/0`, and copy the connection string.
 2. **App:** on [Render](https://render.com), choose **New > Blueprint**, select this repository, and paste the connection string as `MONGODB_URI`. The included `render.yaml` sets up everything else, including a generated `JWT_SECRET`.
+
+3. **Search (recommended):** create a free Google Books API key (Google Cloud Console > APIs & Services > enable **Books API** > Credentials > **Create API key**) and add it in Render as `GOOGLE_BOOKS_API_KEY`. Without a key, searches share Google's anonymous limit and may fail with a "busy" message.
 
 Render's free plan sleeps after 15 minutes without traffic, so the first visit after a break can take about a minute to load.
 

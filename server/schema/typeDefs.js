@@ -32,6 +32,7 @@ const typeDefs = `#graphql
 
   type Query {
     me: User
+    searchBooks(query: String!): [Book!]!
   }
 
   type Mutation {

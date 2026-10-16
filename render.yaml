@@ -17,3 +17,5 @@ services:
         generateValue: true
       - key: MONGODB_URI
         sync: false # paste your MongoDB Atlas connection string when prompted
+      - key: GOOGLE_BOOKS_API_KEY
+        sync: false # optional: free key from Google Cloud for reliable search

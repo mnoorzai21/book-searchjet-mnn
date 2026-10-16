@@ -1,6 +1,7 @@
 const { GraphQLError } = require("graphql");
 const { signToken, authenticationError } = require("../utils/auth");
 const { User } = require("../models");
+const { searchGoogleBooks } = require("../utils/googleBooks");
 
 const PRIVATE_FIELDS = "-__v -password";
 
@@ -22,6 +23,20 @@ const resolvers = {
       const user = requireUser(context);
 
       return User.findById(user._id).select(PRIVATE_FIELDS);
+    },
+
+    searchBooks: async (parent, { query }) => {
+      const trimmed = query.trim();
+
+      if (!trimmed) {
+        throw badInput("Enter a title, author or topic to search.");
+      }
+
+      if (trimmed.length > 200) {
+        throw badInput("Search is too long.");
+      }
+
+      return searchGoogleBooks(trimmed);
     },
   },
 
