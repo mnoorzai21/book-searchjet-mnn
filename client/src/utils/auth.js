@@ -29,13 +29,13 @@ class AuthService {
 
   login(idToken) {
     localStorage.setItem(TOKEN_KEY, idToken);
-    window.location.assign("/");
+    window.location.assign(import.meta.env.BASE_URL);
   }
 
   logout() {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem("saved_books");
-    window.location.assign("/");
+    window.location.assign(import.meta.env.BASE_URL);
   }
 }
 
