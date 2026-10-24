@@ -4,7 +4,7 @@
 
 A full-stack MERN app for searching the Google Books catalog and keeping a personal reading list. Users sign up, search for any title, author or topic, save books to their account, and remove them later.
 
-**Live demo:** https://book-searchjet.onrender.com (free hosting: the first load after a break can take about a minute)
+**Live demo:** https://mnoorzai21.github.io/book-searchjet-mnn/ (the API runs on Render's free tier, so the first search after a break can take about a minute)
 
 ![Book Search screenshot](./client/src/images/bookSearch-screenshot.png)
 
