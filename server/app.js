@@ -4,7 +4,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const { ApolloServer } = require("@apollo/server");
 const { expressMiddleware } = require("@as-integrations/express5");
-
+const cors = require("cors");
 const { typeDefs, resolvers } = require("./schema");
 const { getUserFromRequest } = require("./utils/auth");
 
@@ -25,8 +25,16 @@ async function createApp({ clientDist = CLIENT_DIST } = {}) {
     res.json({ ok: true, database: mongoose.connection.readyState === 1 });
   });
 
+  // Browser origins allowed to call the API from another domain,
+  // e.g. the GitHub Pages frontend. Comma-separated in CLIENT_ORIGIN.
+  const allowedOrigins = (process.env.CLIENT_ORIGIN || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
   app.use(
     "/graphql",
+    cors({ origin: allowedOrigins }),
     express.json(),
     expressMiddleware(apollo, {
       context: async ({ req }) => ({ user: getUserFromRequest(req) }),
