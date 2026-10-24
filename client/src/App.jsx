@@ -11,7 +11,9 @@ import SavedBooks from "./pages/SavedBooks";
 import Navbar from "./components/Navbar";
 import Auth from "./utils/auth";
 
-const httpLink = createHttpLink({ uri: "/graphql" });
+const httpLink = createHttpLink({
+  uri: import.meta.env.VITE_GRAPHQL_URL || "/graphql",
+});
 
 // Attach the login token to every GraphQL request.
 const authLink = setContext((_, { headers }) => {
@@ -33,14 +35,16 @@ const client = new ApolloClient({
 function App() {
   return (
     <ApolloProvider client={client}>
-      <Router>
+      <Router basename={import.meta.env.BASE_URL}>
         <Navbar />
         <Routes>
           <Route path="/" element={<SearchBooks />} />
           <Route path="/saved" element={<SavedBooks />} />
           <Route
             path="*"
-            element={<h1 className="display-4 text-center my-5">Page not found</h1>}
+            element={
+              <h1 className="display-4 text-center my-5">Page not found</h1>
+            }
           />
         </Routes>
       </Router>
