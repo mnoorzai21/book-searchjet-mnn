@@ -18,11 +18,11 @@ A full-stack MERN app for searching the Google Books catalog and keeping a perso
 
 ## Tech Stack
 
-**Frontend:** React 19, Vite, Apollo Client, React Router, React Bootstrap
-**Backend:** Node.js, Express 5, Apollo Server 5 (GraphQL), Mongoose 8
-**Database:** MongoDB (MongoDB Atlas in production)
-**Testing & CI:** Node's test runner, mongodb-memory-server, GitHub Actions
-**Hosting:** GitHub Pages (frontend, deployed with GitHub Actions), Render (API, free plan), and MongoDB Atlas (database, free M0 cluster)
+- **Frontend:** React 19, Vite, Apollo Client, React Router, React Bootstrap
+- **Backend:** Node.js, Express 5, Apollo Server 5 (GraphQL), Mongoose 8
+- **Database:** MongoDB (MongoDB Atlas in production)
+- **Testing & CI:** Node's test runner, mongodb-memory-server, GitHub Actions
+- **Hosting:** GitHub Pages (frontend, deployed with GitHub Actions), Render (API, free plan), and MongoDB Atlas (database, free M0 cluster)
 
 ## How It Works
 
@@ -100,4 +100,5 @@ Render's free plan sleeps after 15 minutes without traffic. The page itself load
 
 - GitHub: [mnoorzai21](https://github.com/mnoorzai21)
 - LinkedIn: [mnoorzai21](https://www.linkedin.com/in/mnoorzai21)
+- Portfolio: [mnoorzai.vercel.app](https://mnoorzai.vercel.app)
 - Email: [mnoorzai21@gmail.com](mailto:mnoorzai21@gmail.com)
